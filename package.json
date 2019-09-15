@@ -1,5 +1,5 @@
 {
-  "name": "Weather PWA",
+  "name": "weatherpwa",
   "version": "0.0.1",
   "description": "weather forecast pwa: POC for Ken",
   "scripts": {
@@ -7,11 +7,11 @@
   },
   "main": "app.js",
   "dependencies": {
-
+    "axios": "^0.19.0",
+    "express": "^4.17.1",
+    "jquery": "^3.4.1"
   },
-  "devDependencies": {
-
-  },
+  "devDependencies": {},
   "engines": {
     "node": "10.x.x"
   }
