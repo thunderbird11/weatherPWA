@@ -7,7 +7,7 @@
       hasRequestPending: false,
       isLoading: true,
       visibleCards: {},
-      selectedCities: [],
+      selectedCities: {},
       weatherData:{},
       spinner: document.querySelector('.loader'),
       cardTemplate: document.querySelector('.cardTemplate'),
@@ -15,6 +15,8 @@
       addDialog: document.querySelector('.dialog-container'),
       daysOfWeek: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     };
+
+    
 
      /*****************************************************************************
      *
@@ -26,12 +28,16 @@
      var openWeahercurrent = 'http://api.openweathermap.org/data/2.5/weather';
      var openWeaherForecast = 'http://api.openweathermap.org/data/2.5/forecast';
 
-     function getWeatherCurrent(city, lat, lon)
+     function getWeatherCurrent(city, cityid, lat, lon)
      {
          var url = openWeahercurrent + '?appid=' +  apiKey;
-         if (city == '') // query via lat/lon
+         if (city == '' && cityid == 0) // query via lat/lon
          {
              url = url + '&lat='+ lat + '&lon=' + lon;
+         }
+         else if (city == '') // query via cityid
+         {
+             url = url + '&id='+ cityid;
          }
          else 
          {
@@ -40,12 +46,16 @@
          return axios.get(url);
      }
 
-     function getWeatherForecast(city, lat, lon)
+     function getWeatherForecast(city, cityid,  lat, lon)
      {
          var url = openWeaherForecast + '?appid=' +  apiKey;
-         if (city == '') // query via lat/lon
+         if (city == ''  && cityid == 0) // query via cityid
          {
              url = url + '&lat='+ lat + '&lon=' + lon;
+         }
+         else if (city == '') // query via cityid
+         {
+             url = url + '&id='+ cityid;
          }
          else 
          {
@@ -54,9 +64,9 @@
          return axios.get(url);
      }
 
-     function getWeather(city, lat, lon , resolve, reject)
+     function getWeather(city, cityid, lat, lon , resolve, reject)
      {
-        axios.all([getWeatherCurrent(city, lat, lon),getWeatherForecast(city, lat, lon)])
+        axios.all([getWeatherCurrent(city, cityid,lat, lon),getWeatherForecast(city,cityid, lat, lon)])
         .then(axios.spread(function (cur, forecast) {
           var rd = {current: cur.data,
                 forecast: forecast.data };
@@ -71,28 +81,7 @@
 
      
 
-     /*****************************************************************************
-     *
-     * Set current location
-     *
-     ****************************************************************************/
-     if (navigator.geolocation){
 
-        navigator.geolocation.getCurrentPosition(
-            function(position)
-            {
-                var latitude  = position.coords.latitude;
-                var longitude = position.coords.longitude;
-                app.getForecast('shanghai',latitude,longitude);
-            },
-            function() // Cannot get current location
-            {
-                console.log("Cannot get geo location from API");
-            }
-        );
-
-      }
-  
   
     /*****************************************************************************
      *
@@ -129,20 +118,10 @@
             return;
         }
 
-        app.getForecast(cityname,0,0);
+        app.getForecast(cityname,0,0,0);
         
         $( "#butAddCancel" ).trigger( "click" );
-        return;
 
-
-      var select = document.getElementById('selectCityToAdd');
-      var selected = select.options[select.selectedIndex];
-      var key = selected.value;
-      var label = selected.textContent;
-      app.getForecast(key, label);
-      app.selectedCities.push({key: key, label: label});
-      app.saveSelectedCities();
-      app.toggleAddDialog(false);
     });
   
   
@@ -208,8 +187,7 @@
         trenddata.push([d.dt_Date.toLocaleString(), Math.round(d.main.temp_min*10)/10, Math.round(d.main.temp_max*10)/10])
       });
 
-
-      
+      card.querySelector('.hourlytrend').innerHTML = '';
       var chart = anychart.column( );
       var series = chart.rangeColumn(trenddata);
       chart.xAxis().title("Date/Time");
@@ -233,8 +211,8 @@
      *
      ****************************************************************************/
 
-    app.getForecast = function(city, lat, lon) {
-        getWeather(city,lat,lon,
+    app.getForecast = function(city,pcityid, lat, lon) {
+        getWeather(city,pcityid,lat,lon,
             function(data){
                 var cityId = data.forecast.city.id;
                 var timezone = data.forecast.city.timezone;
@@ -252,6 +230,12 @@
                 data.current.dt_Date= new Date(data.current.dt*1000);
                 app.weatherData[cityId] = data;// Cache data in momery
                 app.updateForecastCard(cityId);
+                if ( !(cityId in app.selectedCities))
+                {
+                  app.selectedCities[cityId] = {'favor' : 0, 'showTrend': 0};
+                  app.saveSelectedCities();
+                }
+                
             },
             function(message)           
             {
@@ -263,7 +247,7 @@
     app.updateForecasts = function() {
       var keys = Object.keys(app.visibleCards);
       keys.forEach(function(key) {
-        app.getForecast(key);
+        app.getForecast('',key,0,0);
       });
     };
   
@@ -273,31 +257,48 @@
       // IMPORTANT: See notes about use of localStorage.
       localStorage.selectedCities = selectedCities;
     };
-  
-    /************************************************************************
+
+
+    /*****************************************************************************
      *
-     * Code required to start the app
+     * Set current location if not any cache city
      *
-     * NOTE: To simplify this codelab, we've used localStorage.
-     *   localStorage is a synchronous API and has serious performance
-     *   implications. It should not be used in production applications!
-     *   Instead, check out IDB (https://www.npmjs.com/package/idb) or
-     *   SimpleDB (https://gist.github.com/inexorabletash/c8069c042b734519680c)
-     ************************************************************************/
-  
+     ****************************************************************************/
     app.selectedCities = localStorage.selectedCities;
     if (app.selectedCities) {
       app.selectedCities = JSON.parse(app.selectedCities);
-      app.selectedCities.forEach(function(city) {
-        app.getForecast(city.key, city.label);
+      Object.keys(app.selectedCities).forEach(function(city) {
+        app.getForecast('',city,0,0);
       });
-    } else {
-      app.updateForecastCard(initialWeatherForecast);
-      app.selectedCities = [
-        {key: initialWeatherForecast.key, label: initialWeatherForecast.label}
-      ];
-      app.saveSelectedCities();
+    } 
+    else
+    {
+      app.selectedCities = {}
+     if (navigator.geolocation){
+
+        navigator.geolocation.getCurrentPosition(
+            function(position)
+            {
+                var latitude  = position.coords.latitude;
+                var longitude = position.coords.longitude;
+                app.getForecast('',0,latitude,longitude);
+            },
+            function() // Cannot get current location
+            {
+                console.log("Cannot get geo location from API");
+            }
+        );
+
+      }
     }
+  
+    /************************************************************************
+     *
+     * Service worker
+     *
+     ************************************************************************/
+  
+    
   
     var registration;
   
