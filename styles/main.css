@@ -282,8 +282,11 @@
       -webkit-flex-grow: 1;
           -ms-flex-positive: 1;
               flex-grow: 1; }
-    .weather-forecast .current .feels-like:before {
-      content: "Feels like: ";
+    .weather-forecast .current .tempmax:before {
+      content: "Temp Max: ";
+      color: #888; }
+    .weather-forecast .current .tempmin:before {
+      content: "Temp Min: ";
       color: #888; }
     .weather-forecast .current .wind:before {
       content: "Wind: ";
@@ -300,7 +303,15 @@
     .weather-forecast .current .pcount:before {
       content: "Pollen ";
       color: #888; }
-  
+
+    .weather-forecast .hourlytrend {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        height: 300px;
+       }
+
   .weather-forecast .future {
     display: -webkit-box;
     display: -webkit-flex;
@@ -347,6 +358,42 @@
       background-image: url("/images/partly-cloudy.png"); }
     .weather-forecast .icon.thunderstorms {
       background-image: url("/images/thunderstorms.png"); }
+    .weather-forecast .icon.w01d {
+      background-image: url("/images/01d.png"); }  
+    .weather-forecast .icon.w01n {
+      background-image: url("/images/01n.png"); } 
+    .weather-forecast .icon.w02d {
+      background-image: url("/images/02d.png"); } 
+    .weather-forecast .icon.w02n {
+      background-image: url("/images/02n.png"); } 
+    .weather-forecast .icon.w03d {
+      background-image: url("/images/03d.png"); }     
+    .weather-forecast .icon.w03n {
+      background-image: url("/images/03n.png"); }
+    .weather-forecast .icon.w04d {
+      background-image: url("/images/04d.png"); }  
+    .weather-forecast .icon.w04n {
+      background-image: url("/images/04n.png"); } 
+    .weather-forecast .icon.w09d {
+      background-image: url("/images/09d.png"); } 
+    .weather-forecast .icon.w09n {
+      background-image: url("/images/09n.png"); } 
+    .weather-forecast .icon.w10d {
+      background-image: url("/images/10d.png"); }     
+    .weather-forecast .icon.w10n {
+      background-image: url("/images/10n.png"); }
+    .weather-forecast .icon.w11d {
+      background-image: url("/images/11d.png"); }  
+    .weather-forecast .icon.w11n {
+      background-image: url("/images/11n.png"); } 
+    .weather-forecast .icon.w13d {
+      background-image: url("/images/13d.png"); } 
+    .weather-forecast .icon.w13n {
+      background-image: url("/images/13n.png"); } 
+    .weather-forecast .icon.w50d {
+      background-image: url("/images/50d.png"); }     
+    .weather-forecast .icon.w50n {
+      background-image: url("/images/50n.png"); }
   
   @media (max-width: 450px) {
     .weather-forecast .date, .weather-forecast .description {

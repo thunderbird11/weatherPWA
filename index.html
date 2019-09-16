@@ -9,6 +9,7 @@
   <link rel="manifest" href="./manifest.json">
   <script src="./scripts/jquery.js"></script>
   <script src="./scripts/axios.js"></script>
+  <script src="./scripts/anychart-base.min.js"></script>
 
   <!-- Add to home screen for Safari on iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -41,18 +42,20 @@
         <div class="visual">
           <div class="icon"></div>
           <div class="temperature">
-            <span class="value"></span><span class="scale">°F</span>
+            <span class="value"></span><span class="scale">°C</span>
           </div>
         </div>
         <div class="description">
-          <div class="feels-like">
-            <span class="value"></span><span class="scale">°F</span>
+          <div class="tempmax">
+            <span class="value"></span><span class="scale">°C</span>
           </div>
-          <div class="precip"></div>
+          <div class="tempmin">
+            <span class="value"></span><span class="scale">°C</span>
+          </div>
           <div class="humidity"></div>
           <div class="wind">
             <span class="value"></span>
-            <span class="scale">mph</span>
+            <span class="scale">meter/sec</span>
             <span class="direction"></span>°
           </div>
         </div>
@@ -98,36 +101,9 @@
             <span class="value"></span>°
           </div>
         </div>
-        <div class="oneday">
-          <div class="date"></div>
-          <div class="icon"></div>
-          <div class="temp-high">
-            <span class="value"></span>°
-          </div>
-          <div class="temp-low">
-            <span class="value"></span>°
-          </div>
-        </div>
-        <div class="oneday">
-          <div class="date"></div>
-          <div class="icon"></div>
-          <div class="temp-high">
-            <span class="value"></span>°
-          </div>
-          <div class="temp-low">
-            <span class="value"></span>°
-          </div>
-        </div>
-        <div class="oneday">
-          <div class="date"></div>
-          <div class="icon"></div>
-          <div class="temp-high">
-            <span class="value"></span>°
-          </div>
-          <div class="temp-low">
-            <span class="value"></span>°
-          </div>
-        </div>
+      </div>
+      <div class="hourlytrend">
+
       </div>
     </div>
   </main>

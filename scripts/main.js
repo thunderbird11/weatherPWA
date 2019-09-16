@@ -2,38 +2,13 @@
 (function() {
     'use strict';
   
-    var initialWeatherForecast = {
-      key: 'newyork',
-      label: 'New York, NY',
-      currently: {
-        time: 1453489481,
-        summary: 'Clear',
-        icon: 'partly-cloudy-day',
-        temperature: 52.74,
-        apparentTemperature: 74.34,
-        precipProbability: 0.20,
-        humidity: 0.77,
-        windBearing: 125,
-        windSpeed: 1.52
-      },
-      daily: {
-        data: [
-          {icon: 'clear-day', temperatureMax: 55, temperatureMin: 34},
-          {icon: 'rain', temperatureMax: 55, temperatureMin: 34},
-          {icon: 'snow', temperatureMax: 55, temperatureMin: 34},
-          {icon: 'sleet', temperatureMax: 55, temperatureMin: 34},
-          {icon: 'fog', temperatureMax: 55, temperatureMin: 34},
-          {icon: 'wind', temperatureMax: 55, temperatureMin: 34},
-          {icon: 'partly-cloudy-day', temperatureMax: 55, temperatureMin: 34}
-        ]
-      }
-    };
-  
+
     var app = {
       hasRequestPending: false,
       isLoading: true,
       visibleCards: {},
       selectedCities: [],
+      weatherData:{},
       spinner: document.querySelector('.loader'),
       cardTemplate: document.querySelector('.cardTemplate'),
       container: document.querySelector('.main'),
@@ -48,11 +23,12 @@
      ****************************************************************************/
 
      var apiKey = '745a37a126ac353117c6137c60bd42f5';
-     var openWeaher = 'http://api.openweathermap.org/data/2.5/forecast';
+     var openWeahercurrent = 'http://api.openweathermap.org/data/2.5/weather';
+     var openWeaherForecast = 'http://api.openweathermap.org/data/2.5/forecast';
 
-     function getWeather(city, lat, lon , resolve, reject)
+     function getWeatherCurrent(city, lat, lon)
      {
-         var url = openWeaher + '?appid=' +  apiKey;
+         var url = openWeahercurrent + '?appid=' +  apiKey;
          if (city == '') // query via lat/lon
          {
              url = url + '&lat='+ lat + '&lon=' + lon;
@@ -61,13 +37,36 @@
          {
             url = url + '&q='+ city;
          }
-         axios.get(url)
-         .then(function(response) {
-            resolve(response.data)
-         })
-         .catch(function(error){
-            reject(error.message);
-         });
+         return axios.get(url);
+     }
+
+     function getWeatherForecast(city, lat, lon)
+     {
+         var url = openWeaherForecast + '?appid=' +  apiKey;
+         if (city == '') // query via lat/lon
+         {
+             url = url + '&lat='+ lat + '&lon=' + lon;
+         }
+         else 
+         {
+            url = url + '&q='+ city;
+         }
+         return axios.get(url);
+     }
+
+     function getWeather(city, lat, lon , resolve, reject)
+     {
+        axios.all([getWeatherCurrent(city, lat, lon),getWeatherForecast(city, lat, lon)])
+        .then(axios.spread(function (cur, forecast) {
+          var rd = {current: cur.data,
+                forecast: forecast.data };
+          resolve(rd);
+        }))
+        .catch(function(error) 
+        {
+          reject(error.message);
+        }
+        );
      }
 
      
@@ -84,7 +83,7 @@
             {
                 var latitude  = position.coords.latitude;
                 var longitude = position.coords.longitude;
-                app.getForecast('',latitude,longitude);
+                app.getForecast('shanghai',latitude,longitude);
             },
             function() // Cannot get current location
             {
@@ -153,60 +152,73 @@
      * Methods to update/refresh the UI
      *
      ****************************************************************************/
-  
-    // Toggles the visibility of the add new city dialog.
-    app.toggleAddDialog = function(visible) {
-      if (visible) {
-        app.addDialog.classList.add('dialog-container--visible');
-      } else {
-        app.addDialog.classList.remove('dialog-container--visible');
-      }
-    };
+    function addDays(date, days) {
+      var result = new Date(date);
+      result.setDate(result.getDate() + days);
+      return result;
+    }
   
     // Updates a weather card with the latest weather forecast. If the card
     // doesn't already exist, it's cloned from the template.
-    app.updateForecastCard = function(data) {
-      var card = app.visibleCards[data.key];
+    app.updateForecastCard = function(cityId) {
+      var data = app.weatherData[cityId];
+      if (!data)
+      {
+        console.log('Cannot find data for city '+  cityId + '. Must something wrong in code.');
+        return;
+      }
+      var card = app.visibleCards[cityId];
       if (!card) {
         card = app.cardTemplate.cloneNode(true);
         card.classList.remove('cardTemplate');
-        card.querySelector('.location').textContent = data.label;
+        card.querySelector('.location').textContent = data.forecast.city.name + ',' +  data.forecast.city.country;
         card.removeAttribute('hidden');
         app.container.appendChild(card);
-        app.visibleCards[data.key] = card;
+        app.visibleCards[cityId] = card;
       }
-      card.querySelector('.description').textContent = data.currently.summary;
-      card.querySelector('.date').textContent =
-        new Date(data.currently.time * 1000);
-      card.querySelector('.current .icon').classList.add(data.currently.icon);
-      card.querySelector('.current .temperature .value').textContent =
-        Math.round(data.currently.temperature);
-      card.querySelector('.current .feels-like .value').textContent =
-        Math.round(data.currently.apparentTemperature);
-      card.querySelector('.current .precip').textContent =
-        Math.round(data.currently.precipProbability * 100) + '%';
-      card.querySelector('.current .humidity').textContent =
-        Math.round(data.currently.humidity * 100) + '%';
-      card.querySelector('.current .wind .value').textContent =
-        Math.round(data.currently.windSpeed);
-      card.querySelector('.current .wind .direction').textContent =
-        data.currently.windBearing;
+      card.querySelector('.description').textContent = data.current.weather[0].description;
+      card.querySelector('.date').textContent = data.current.dt_Date;
+      card.querySelector('.current .icon').classList.add('w' + data.current.weather[0].icon);
+      card.querySelector('.current .temperature .value').textContent =  Math.round(data.current.main.temp*10)/10;
+      card.querySelector('.current .tempmax .value').textContent =  Math.round(data.current.main.temp_max*10)/10;
+      card.querySelector('.current .tempmin .value').textContent = Math.round(data.current.main.temp_min*10)/10;
+      card.querySelector('.current .humidity').textContent =  Math.round(data.current.main.humidity) + '%';
+      card.querySelector('.current .wind .value').textContent =   data.current.wind.speed;
+      card.querySelector('.current .wind .direction').textContent =         data.current.wind.deg;
       var nextDays = card.querySelectorAll('.future .oneday');
       var today = new Date();
       today = today.getDay();
-      for (var i = 0; i < 7; i++) {
+      var curDay = new Date();
+      curDay.setHours(12,0,0);
+      var forecastData = data.forecast.list;
+      for (var i = 0; i < 4; i++) {
         var nextDay = nextDays[i];
-        var daily = data.daily.data[i];
+        var daily = forecastData.filter(function(d) {return d.dt_Date>= addDays(curDay,i+1) && d.dt_Date< addDays(curDay,i+2)  })[0];
         if (daily && nextDay) {
-          nextDay.querySelector('.date').textContent =
-            app.daysOfWeek[(i + today) % 7];
-          nextDay.querySelector('.icon').classList.add(daily.icon);
-          nextDay.querySelector('.temp-high .value').textContent =
-            Math.round(daily.temperatureMax);
-          nextDay.querySelector('.temp-low .value').textContent =
-            Math.round(daily.temperatureMin);
+          nextDay.querySelector('.date').textContent =   app.daysOfWeek[(i + today) % 7];
+          nextDay.querySelector('.icon').classList.add('w'+daily.weather[0].icon);
+          nextDay.querySelector('.temp-high .value').textContent =    Math.round(daily.main.temp_max*10)/10;
+          nextDay.querySelector('.temp-low .value').textContent =     Math.round(daily.main.temp_min*10)/10;
         }
       }
+
+
+      var trenddata = [];       
+      forecastData.forEach(function(d){
+        trenddata.push([d.dt_Date.toLocaleString(), Math.round(d.main.temp_min*10)/10, Math.round(d.main.temp_max*10)/10])
+      });
+
+
+      
+      var chart = anychart.column( );
+      var series = chart.rangeColumn(trenddata);
+      chart.xAxis().title("Date/Time");
+      chart.yAxis().title("Temperature, \xb0C");
+      chart.xAxis().labels(false);
+      chart.container(card.querySelector('.hourlytrend'));
+      chart.draw();
+
+
       if (app.isLoading) {
         app.spinner.setAttribute('hidden', true);
         app.container.removeAttribute('hidden');
@@ -224,9 +236,9 @@
     app.getForecast = function(city, lat, lon) {
         getWeather(city,lat,lon,
             function(data){
-                var cityId = data.city.id;
-                var timezone = data.city.timezone;
-                data.list.forEach(function(d)
+                var cityId = data.forecast.city.id;
+                var timezone = data.forecast.city.timezone;
+                data.forecast.list.forEach(function(d)
                     {
                         d.main.temp = d.main.temp -  273.15;
                         d.main.temp_max = d.main.temp_max -  273.15;
@@ -234,50 +246,17 @@
                         d.dt_Date= new Date(d.dt*1000);
                     }
                 );
-                console.log(data);
+                data.current.main.temp = data.current.main.temp - 273.15;
+                data.current.main.temp_max = data.current.main.temp_max - 273.15;
+                data.current.main.temp_min = data.current.main.temp_min - 273.15;
+                data.current.dt_Date= new Date(data.current.dt*1000);
+                app.weatherData[cityId] = data;// Cache data in momery
+                app.updateForecastCard(cityId);
             },
             function(message)           
             {
                 console.error(message);
-            })
-    }
-  
-    // Gets a forecast for a specific city and update the card with the data
-    app.getForecast1 = function(key, label) {
-      var url = 'https://publicdata-weather.firebaseio.com/';
-      url += key + '.json';
-      if ('caches' in window) {
-        caches.match(url).then(function(response) {
-          if (response) {
-            response.json().then(function(json) {
-              // Only update if the XHR is still pending, otherwise the XHR
-              // has already returned and provided the latest data.
-              if (app.hasRequestPending) {
-                console.log('updated from cache');
-                json.key = key;
-                json.label = label;
-                app.updateForecastCard(json);
-              }
             });
-          }
-        });
-      }
-      // Make the XHR to get the data, then update the card
-      app.hasRequestPending = true;
-      var request = new XMLHttpRequest();
-      request.onreadystatechange = function() {
-        if (request.readyState === XMLHttpRequest.DONE) {
-          if (request.status === 200) {
-            var response = JSON.parse(request.response);
-            response.key = key;
-            response.label = label;
-            app.hasRequestPending = false;
-            app.updateForecastCard(response);
-          }
-        }
-      };
-      request.open('GET', url);
-      request.send();
     };
   
     // Iterate all of the cards and attempt to get the latest forecast data
