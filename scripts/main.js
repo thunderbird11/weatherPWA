@@ -24,44 +24,40 @@
      *
      ****************************************************************************/
 
-     var apiKey = '745a37a126ac353117c6137c60bd42f5';
-     var openWeahercurrent = 'http://api.openweathermap.org/data/2.5/weather';
-     var openWeaherForecast = 'http://api.openweathermap.org/data/2.5/forecast';
-
      function getWeatherCurrent(city, cityid, lat, lon)
      {
-         var url = openWeahercurrent + '?appid=' +  apiKey;
+         var url = '';
          if (city == '' && cityid == 0) // query via lat/lon
          {
-             url = url + '&lat='+ lat + '&lon=' + lon;
+            url = '/weather/current/geo/' + lat + '/' + lon;
          }
          else if (city == '') // query via cityid
          {
-             url = url + '&id='+ cityid;
+            url = '/weather/current/cityid/' + cityid;
          }
          else 
          {
-            url = url + '&q='+ city;
+          url = '/weather/current/cityname/' + city;
          }
          return axios.get(url);
      }
 
      function getWeatherForecast(city, cityid,  lat, lon)
      {
-         var url = openWeaherForecast + '?appid=' +  apiKey;
-         if (city == ''  && cityid == 0) // query via cityid
-         {
-             url = url + '&lat='+ lat + '&lon=' + lon;
-         }
-         else if (city == '') // query via cityid
-         {
-             url = url + '&id='+ cityid;
-         }
-         else 
-         {
-            url = url + '&q='+ city;
-         }
-         return axios.get(url);
+        var url = '';
+        if (city == '' && cityid == 0) // query via lat/lon
+        {
+            url = '/weather/forecast/geo/' + lat + '/' + lon;
+        }
+        else if (city == '') // query via cityid
+        {
+            url = '/weather/forecast/cityid/' + cityid;
+        }
+        else 
+        {
+            url = '/weather/forecast/cityname/' + city;
+        }
+        return axios.get(url);
      }
 
      function getWeather(city, cityid, lat, lon , resolve, reject)
@@ -259,11 +255,30 @@
     };
 
 
+     /************************************************************************
+     *
+     * Service worker
+     *
+     ************************************************************************/
+  
+    
+  
+    var registration;
+  
+    if('serviceWorker' in navigator) {
+
+      console.log('Service Worker is supported'); 
+      navigator.serviceWorker.register('./sw.js')
+               .then(function() { console.log('Service Worker Registered'); })
+               .catch( function(err) { console.error(err.message) });
+              }      
+
     /*****************************************************************************
      *
      * Set current location if not any cache city
-     *
+     *   
      ****************************************************************************/
+
     app.selectedCities = localStorage.selectedCities;
     if (app.selectedCities) {
       app.selectedCities = JSON.parse(app.selectedCities);
@@ -273,7 +288,8 @@
     } 
     else
     {
-      app.selectedCities = {}
+ 
+      app.selectedCities = {};
      if (navigator.geolocation){
 
         navigator.geolocation.getCurrentPosition(
@@ -292,63 +308,7 @@
       }
     }
   
-    /************************************************************************
-     *
-     * Service worker
-     *
-     ************************************************************************/
-  
-    
-  
-    var registration;
-  
-    if('serviceWorker' in navigator) {
-      console.log('Service Worker is supported');
-  
-      navigator.serviceWorker
-               .register('./sw.js')
-               .then(function() { console.log('Service Worker Registered'); });
-  
-      navigator.serviceWorker.register('service-worker-push-notifications.js').then(function() {
-        return navigator.serviceWorker.ready;
-      }).then(function(serviceWorkerRegistration) {
-        registration = serviceWorkerRegistration;
-        console.log('Service Worker is ready :^)', registration);
-      }).catch(function(error) {
-        console.log('Service Worker Error :^(', error);
-      });
-    }
-  
-    var subcription;
-    var isSubscribed = false;
-    var notificationsButton = document.getElementById('butNotifications');
-  
-    notificationsButton.addEventListener('click', function() {
-      if (isSubscribed) {
-        unsubscribe();
-      } else {
-        subscribe();
-      }
-    });
-  
-    function subscribe() {
-      registration.pushManager.subscribe({
-        userVisibleOnly: true
-      }).then(function(pushSubscription){
-        subcription = pushSubscription;
-        console.log('Subscribed! Endpoint:', subcription.endpoint);
-        isSubscribed = true;
-    });
-  }
-  
-  function unsubscribe() {
-    subcription.unsubscribe().then(function(event) {
-      console.log('Unsubscribed!', event);
-      isSubscribed = false;
-    }).catch(function(error) {
-      console.log('Error unsubscribing', error);
-    });
-  }
+   
+
   
   })();
-  
