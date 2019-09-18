@@ -8,6 +8,7 @@ This is a POC for weather forecast with PWA.
  * No QPS requirement
  * Tested on Window 10 / Node 10+ / Chrome V76+ Only
  * As POC more focus on functionality
+ * UI layout refer https://weather-7f26a.firebaseapp.com/
 
 ## Design
 
