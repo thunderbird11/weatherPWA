@@ -48,7 +48,7 @@ This is a POC for weather forecast with PWA.
 
 ## How to run in local
 
-* Open terminal and go the code directory to run `node app.js`
+* Open terminal and go the code directory to run `npm start`  or `node app.js`
 * open chrome to access `http://localhost:8088`
 
 ## Known issue
