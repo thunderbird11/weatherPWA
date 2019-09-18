@@ -42,12 +42,12 @@ Render in local with cached data to improve ux
 
 
 ## How to setup in local
-npm install
+`npm install`
 
 ## How to run in local
 
-node app.js
-http://localhost:8088
+`node app.js`
+open chrome to access `http://localhost:8088`
 
 ## Known issue
 
