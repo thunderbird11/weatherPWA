@@ -11,6 +11,8 @@ This is a POC for weather forecast with PWA.
 
 ## Design
 
+![image](https://github.com/thunderbird11/weatherPWA/blob/master/flowchart.jpg)
+
 ## Technology 
 
 * **Nodejs** to host local server
