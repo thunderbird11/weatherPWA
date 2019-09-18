@@ -34,6 +34,10 @@ var filesToCache = [
   '/images/remove.png',
   '/images/weather144.png',
   '/images/weather152.png',
+  '/images/up.png',
+  '/images/down.png',
+  '/images/fav.png',
+  '/images/unfav.png',
   '/favicon.ico'
 
 ];

@@ -35,7 +35,15 @@
   <main class="main">
     <div class="card cardTemplate weather-forecast" hidden>
       <div class="city-key" hidden></div>
+      <div class="cardheader">
+          <div class="cardbutton favcard"></div>
+          <div class="cardbutton unfavcard"></div>
+          <div class="cardbutton showtrend"></div>
+          <div class="cardbutton hidetrend"></div>
+          <div class="cardbutton removecard"></div>
+    </div>
       <div class="location"></div>
+      
       <div class="date"></div>
       <div class="description"></div>
       <div class="current">
@@ -102,7 +110,7 @@
           </div>
         </div>
       </div>
-      <div class="hourlytrend">
+      <div class="hourlytrend hidden" >
 
       </div>
     </div>
@@ -115,7 +123,7 @@
     </svg>
   </div>
 
-  <script src="./scripts/main.js" async></script>
+  <script src="./scripts/main.js" ></script>
 
 </body>
 </html>

@@ -60,12 +60,15 @@
         return axios.get(url);
      }
 
-     function getWeather(city, cityid, lat, lon , resolve, reject)
+     function getWeather(city, cityid, lat, lon , resolve, reject , callagain=1)
      {
         axios.all([getWeatherCurrent(city, cityid,lat, lon),getWeatherForecast(city,cityid, lat, lon)])
         .then(axios.spread(function (cur, forecast) {
           var rd = {current: cur.data,
                 forecast: forecast.data };
+          if(callagain==1){
+                getWeather('',rd.forecast.city.id,0,0, function(){},function(){},0)  ;    
+          }
           resolve(rd);
         }))
         .catch(function(error) 
@@ -139,18 +142,88 @@
       var data = app.weatherData[cityId];
       if (!data)
       {
-        console.log('Cannot find data for city '+  cityId + '. Must something wrong in code.');
+        console.error('Cannot find data for city '+  cityId + '. Must something wrong in code.');
+        return;
+      }
+
+      console.log(app.selectedCities);
+      var cityset = app.selectedCities[cityId];
+      if (!cityset)
+      {
+        console.error('Cannot find city setting for city '+  cityId + '. Must something wrong in code.');
         return;
       }
       var card = app.visibleCards[cityId];
       if (!card) {
         card = app.cardTemplate.cloneNode(true);
+        card.setAttribute('id', 'card'+cityId);
         card.classList.remove('cardTemplate');
         card.querySelector('.location').textContent = data.forecast.city.name + ',' +  data.forecast.city.country;
         card.removeAttribute('hidden');
+        card.querySelector('.cardheader .favcard').classList.add('hiddeninfo');
+        card.querySelector('.cardheader .hidetrend').classList.add('hiddeninfo');
         app.container.appendChild(card);
         app.visibleCards[cityId] = card;
       }
+      if(cityset.favor==0)
+      {
+        card.querySelector('.cardheader .favcard').classList.add('hiddeninfo');
+        card.querySelector('.cardheader .unfavcard').classList.remove('hiddeninfo');
+        card.querySelector('.cardheader .unfavcard').setAttribute("id", "unfavor"+cityId);
+        $("#unfavor"+cityId).unbind('click');
+        $("#unfavor"+cityId).click(function(){
+          app.selectedCities[cityId].favor = 1;
+          app.saveSelectedCities();
+          app.updateForecastCard(cityId);
+        });
+      }
+      else
+      {
+        card.querySelector('.cardheader .favcard').classList.remove('hiddeninfo');
+        card.querySelector('.cardheader .unfavcard').classList.add('hiddeninfo');
+        card.querySelector('.cardheader .favcard').setAttribute("id", "favor"+cityId);
+        $("#favor"+cityId).unbind('click');
+        $("#favor"+cityId).click(function(){
+          app.selectedCities[cityId].favor = 0;
+          app.saveSelectedCities();
+          app.updateForecastCard(cityId);
+        });
+      }
+      if(cityset.showTrend==0)
+      {
+        card.querySelector('.cardheader .hidetrend').classList.add('hiddeninfo');
+        card.querySelector('.cardheader .showtrend').classList.remove('hiddeninfo');
+        card.querySelector('.cardheader .showtrend').setAttribute("id", "showtrend"+cityId);
+        $("#showtrend"+cityId).unbind('click');
+        $("#showtrend"+cityId).click(function(){
+          app.selectedCities[cityId].showTrend = 1;
+          app.saveSelectedCities();
+          app.updateForecastCard(cityId);
+        });
+      }
+      else
+      {
+        card.querySelector('.cardheader .hidetrend').classList.remove('hiddeninfo');
+        card.querySelector('.cardheader .showtrend').classList.add('hiddeninfo');
+        card.querySelector('.cardheader .hidetrend').setAttribute("id", "hidetrend"+cityId);
+        $("#hidetrend"+cityId).unbind('click');
+        $("#hidetrend"+cityId).click(function(){
+          app.selectedCities[cityId].showTrend = 0;
+          app.saveSelectedCities();
+          app.updateForecastCard(cityId);
+        });
+      }
+      card.querySelector('.cardheader .removecard').setAttribute("id", "removecard"+cityId);
+      $("#removecard"+cityId).unbind('click');
+        $("#removecard"+cityId).click(function(){
+          delete app.selectedCities[cityId];
+          delete app.weatherData[cityId];
+          delete app.visibleCards[cityId];
+          
+          app.saveSelectedCities();
+          app.updateForecastCards();
+          $(this).parent().parent().remove();
+        });
       card.querySelector('.description').textContent = data.current.weather[0].description;
       card.querySelector('.date').textContent = data.current.dt_Date;
       card.querySelector('.current .icon').classList.add('w' + data.current.weather[0].icon);
@@ -183,6 +256,15 @@
         trenddata.push([d.dt_Date.toLocaleString(), Math.round(d.main.temp_min*10)/10, Math.round(d.main.temp_max*10)/10])
       });
 
+      card.querySelector('.hourlytrend').setAttribute('id', 'chart'+cityId);
+      if(cityset.showTrend==0)
+      {
+        card.querySelector('.hourlytrend').classList.add('hiddeninfo');
+      }
+      else{
+        card.querySelector('.hourlytrend').classList.remove('hiddeninfo');
+      }
+      $('#chart'+cityId).unbind('click');
       card.querySelector('.hourlytrend').innerHTML = '';
       var chart = anychart.column( );
       var series = chart.rangeColumn(trenddata);
@@ -198,6 +280,13 @@
         app.container.removeAttribute('hidden');
         app.isLoading = false;
       }
+    };
+
+    app.updateForecastCards = function() {
+      var keys = Object.keys(app.visibleCards);
+      keys.forEach(function(key) {
+        app.updateForecastCard(key);
+      });
     };
   
   
@@ -225,12 +314,13 @@
                 data.current.main.temp_min = data.current.main.temp_min - 273.15;
                 data.current.dt_Date= new Date(data.current.dt*1000);
                 app.weatherData[cityId] = data;// Cache data in momery
-                app.updateForecastCard(cityId);
                 if ( !(cityId in app.selectedCities))
                 {
                   app.selectedCities[cityId] = {'favor' : 0, 'showTrend': 0};
                   app.saveSelectedCities();
                 }
+                app.updateForecastCard(cityId);
+                
                 
             },
             function(message)           
@@ -246,11 +336,12 @@
         app.getForecast('',key,0,0);
       });
     };
+
+    
   
     // Save list of cities to localStorage, see note below about localStorage.
     app.saveSelectedCities = function() {
       var selectedCities = JSON.stringify(app.selectedCities);
-      // IMPORTANT: See notes about use of localStorage.
       localStorage.selectedCities = selectedCities;
     };
 
@@ -280,15 +371,19 @@
      ****************************************************************************/
 
     app.selectedCities = localStorage.selectedCities;
-    if (app.selectedCities) {
+    if ( app.selectedCities) {
       app.selectedCities = JSON.parse(app.selectedCities);
       Object.keys(app.selectedCities).forEach(function(city) {
         app.getForecast('',city,0,0);
       });
+      if (app.isLoading) {
+        app.spinner.setAttribute('hidden', true);
+        app.container.removeAttribute('hidden');
+        app.isLoading = false;
+      }
     } 
     else
     {
- 
       app.selectedCities = {};
      if (navigator.geolocation){
 

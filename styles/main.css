@@ -394,6 +394,44 @@
       background-image: url("/images/50d.png"); }     
     .weather-forecast .icon.w50n {
       background-image: url("/images/50n.png"); }
+    .cardheader { width: 100% ; text-align: right}
+      .weather-forecast .cardbutton {        
+        width: 30px;
+        height: 30px;
+        margin-right: 16px;
+        text-indent: -30000px;
+        overflow: hidden;
+        opacity: 0.54;
+        -webkit-transition: opacity 0.333s cubic-bezier(0, 0, 0.21, 1);
+        transition: opacity 0.333s cubic-bezier(0, 0, 0.21, 1);
+        border: none;
+        outline: none;
+        cursor: pointer; }
+    .weather-forecast  .removecard {
+          background: url(../images/remove.png) center right no-repeat;
+          background-size: 30px 30px;
+          display: inline-block; }
+    .weather-forecast  .favcard {
+          background: url(../images/fav.png) center right no-repeat;
+          background-size: 30px 30px;
+          display: inline-block; }
+    .weather-forecast  .unfavcard {
+          background: url(../images/unfav.png) center right no-repeat;
+          background-size: 24px 24px;
+          display: inline-block; }
+    .weather-forecast  .showtrend {
+          background: url(../images/down.png) center right no-repeat;
+          background-size: 30px 30px;
+          display: inline-block; }
+    .weather-forecast  .hidetrend {
+          background: url(../images/up.png) center right no-repeat;
+          background-size: 30px 30px;
+          display: inline-block; }
+     .hiddeninfo
+     {
+        display: none!important;
+     }
+
   
   @media (max-width: 450px) {
     .weather-forecast .date, .weather-forecast .description {
